@@ -13,7 +13,7 @@ def parse() -> JSON_OBJECT:
     #print(tokens)
     # print(len(tokens))
     # for i in range(len(tokens)):
-    #     print(tokens[i].tokenType)
+    #     print(tokens[i].value)
     parser = Parser(tokens)
     return parser.parse()
 
@@ -45,7 +45,7 @@ class Parser: # this contains all the parser features
             case TokenType.STRING | TokenType.EOF:
                 return self.getCurrentToken().value
 
-    def parseColon(self):
+    def parseColon(self) -> None:
         if self.tokens[self.current].tokenType != TokenType.COLON:
             #print(self.current)
            # print(self.getCurrentToken().value)
@@ -53,6 +53,17 @@ class Parser: # this contains all the parser features
         
         # means it is colon and we shift the current pointer by 1
         self.current += 1        
+
+    def parseComma(self) -> None:
+        if self.getCurrentToken().tokenType == TokenType.RIGHT_BRACE:
+            return
+        if self.getCurrentToken().tokenType == TokenType.COMMA:
+            print(self.getCurrentToken().value)
+            self.current += 1
+            if self.getCurrentToken().tokenType != TokenType.STRING:
+                raise ValueError("unterminated comma")
+            else:
+                return
 
     def parseObject(self) -> JSON_OBJECT:
         
@@ -78,8 +89,9 @@ class Parser: # this contains all the parser features
             # now after parsing of colon the pointer is at next token so calling the parse_from_given_token on it for value
             json_object[key_token.value] = self.parse_from_given_token(self.getCurrentToken())
             self.giveToken()
+            self.parseComma()
             key_token = self.getCurrentToken()
-
+            
         return json_object   
     
 print(parse())

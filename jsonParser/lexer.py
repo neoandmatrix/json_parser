@@ -49,6 +49,8 @@ class Lexer:
                 self.addString()   # parse and add the whole string as once
             case ':':
                 self.tokens.append(Token(tokenTypes.TokenType.COLON,character))
+            case ',':
+                self.tokens.append(Token(tokenTypes.TokenType.COMMA,character))
             case "\n":
                 self.lines += 1
             case _:
