@@ -22,7 +22,7 @@ class Lexer:
         self.lines = 1      # number of lines
         self.tokens = []    # the token list initializing it to be an empty list
 
-    def next(self) -> str:
+    def nextAndReturnCurrent(self) -> str:
         char = self.text[self.current]
         self.current += 1
         return char
@@ -39,14 +39,37 @@ class Lexer:
         return self.current >= len(self.text)
 
     def scanCurrent(self): 
-        character = self.next()
+        character = self.nextAndReturnCurrent()
         match character:
-            case "{":
+            case "{": # starting of an object
                 self.tokens.append(Token(tokenTypes.TokenType.LEFT_BRACE,character))
-            case "}":
+            case "}": # ending of an object
                 self.tokens.append(Token(tokenTypes.TokenType.RIGHT_BRACE,character))
+            case '"': # starting of an string
+                self.addString()   # parse and add the whole string as once
+            case ':':
+                self.tokens.append(Token(tokenTypes.TokenType.COLON,character))
+            case ',':
+                self.tokens.append(Token(tokenTypes.TokenType.COMMA,character))
             case "\n":
                 self.lines += 1
             case _:
                 raise ValueError("Unexpected token",character,self.lines)    
 
+    def addString(self):
+        while self.peak() != '"' or self.isEnd():
+            self.nextAndReturnCurrent()
+
+        if  self.isEnd():
+            raise ValueError('string must end with " ')
+        
+        self.nextAndReturnCurrent() # if all above is not true means the string is terminated and we move past the end double quote
+
+        self.tokens.append(Token(tokenTypes.TokenType.STRING,
+                                 self.text[self.start+1:self.current-1]))  
+
+    def peak(self):
+        if self.isEnd():
+            return ""
+        else:
+            return self.text[self.current]
