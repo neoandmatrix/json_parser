@@ -25,6 +25,8 @@ class Parser: # this contains all the parser features
 
 
     def give_token_and_advance(self) -> Token: # returns the token currently the pointer is at and increases pointer by 1
+        if self.current >= len(self.tokens):
+            return self.tokens[len(self.tokens)-1]
         currentToken = self.tokens[self.current]
         self.current += 1
         return currentToken
@@ -34,7 +36,7 @@ class Parser: # this contains all the parser features
 
 
     def parse(self) -> JSON_OBJECT: # the parse method which give the final json object as output
-        token = self.give_token_and_advance() # this will be passed to parse_from_given_token
+        token = self.get_current_token() # this will be passed to parse_from_given_token
         return self.parse_from_given_token(token)
 
 
@@ -61,12 +63,14 @@ class Parser: # this contains all the parser features
         
         json_object : JSON_OBJECT = {}
         
+        self.advance_current()
         key_token = self.give_token_and_advance() # this will be the key or a right brace in which case we return an empty json object and current will be on colon
 
         while key_token.tokenType != TokenType.RIGHT_BRACE:
+            print(key_token.value,key_token.tokenType)
 
             if key_token.tokenType == TokenType.EOF: # means only { was provided
-                raise ValueError("Incorrect JSON type")
+                break
             
             if key_token.tokenType != TokenType.STRING:
                 raise ValueError('objects must begin with a valid "key"')
@@ -74,7 +78,7 @@ class Parser: # this contains all the parser features
             # if all the cases above not executed then it is correct json format so next thing must be colon
             
             self.parse_colon()
-            
+
             # now after parsing of colon the pointer is at next token so calling the parse_from_given_token on it for value
             json_object[key_token.value] = self.parse_from_given_token(self.get_current_token())
             

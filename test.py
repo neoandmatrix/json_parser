@@ -1,3 +1,2 @@
-test = 'hello i "'
-
-print(len('{"n":"a"}'))
+a=dict({"a":{"b":1},"d":"e","f":{"g":{"h":"i"}},"j":"k"})
+print(a)
