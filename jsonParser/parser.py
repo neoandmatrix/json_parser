@@ -24,17 +24,17 @@ class Parser: # this contains all the parser features
         self.current = 0 # pointer to move
 
 
-    def giveToken(self) -> Token: # returns the token currently the pointer is at
+    def give_token_and_advance(self) -> Token: # returns the token currently the pointer is at and increases pointer by 1
         currentToken = self.tokens[self.current]
         self.current += 1
         return currentToken
     
-    def getCurrentToken(self) -> Token:
+    def get_current_token(self) -> Token:
         return self.tokens[self.current]
 
 
     def parse(self) -> JSON_OBJECT: # the parse method which give the final json object as output
-        token = self.giveToken() # this will be passed to parse_from_given_token
+        token = self.give_token_and_advance() # this will be passed to parse_from_given_token
         return self.parse_from_given_token(token)
 
 
@@ -42,10 +42,13 @@ class Parser: # this contains all the parser features
         match token.tokenType:
             case TokenType.LEFT_BRACE: # if we encounter a left brace means we are at start of python object so calling the parse object
                 return self.parseObject()
-            case TokenType.STRING | TokenType.EOF:
-                return self.getCurrentToken().value
+            case TokenType.STRING :
+                return self.get_current_token().value
+    
+    def advance_current(self)->None:
+        self.current += 1        
 
-    def parseColon(self) -> None:
+    def parse_colon(self) -> None:
         if self.tokens[self.current].tokenType != TokenType.COLON:
             #print(self.current)
            # print(self.getCurrentToken().value)
@@ -54,43 +57,33 @@ class Parser: # this contains all the parser features
         # means it is colon and we shift the current pointer by 1
         self.current += 1        
 
-    def parseComma(self) -> None:
-        if self.getCurrentToken().tokenType == TokenType.RIGHT_BRACE:
-            return
-        if self.getCurrentToken().tokenType == TokenType.COMMA:
-            print(self.getCurrentToken().value)
-            self.current += 1
-            if self.getCurrentToken().tokenType != TokenType.STRING:
-                raise ValueError("unterminated comma")
-            else:
-                return
-
     def parseObject(self) -> JSON_OBJECT:
         
         json_object : JSON_OBJECT = {}
+        
+        key_token = self.give_token_and_advance() # this will be the key or a right brace in which case we return an empty json object and current will be on colon
 
-        key_token = self.giveToken() # this provides the next token after left brace
-       
         while key_token.tokenType != TokenType.RIGHT_BRACE:
+
             if key_token.tokenType == TokenType.EOF: # means only { was provided
                 raise ValueError("Incorrect JSON type")
             
             if key_token.tokenType != TokenType.STRING:
-                raise ValueError('objects must begin with a valid "key" ')
-
-            if key_token.tokenType == TokenType.RIGHT_BRACE: # means an empty {} was passed
-                return json_object
+                raise ValueError('objects must begin with a valid "key"')
             
             # if all the cases above not executed then it is correct json format so next thing must be colon
-            # print(self.getCurrentToken().value)
             
-            self.parseColon()
-            #print(self.current)
+            self.parse_colon()
+            
             # now after parsing of colon the pointer is at next token so calling the parse_from_given_token on it for value
-            json_object[key_token.value] = self.parse_from_given_token(self.getCurrentToken())
-            self.giveToken()
-            self.parseComma()
-            key_token = self.getCurrentToken()
+            json_object[key_token.value] = self.parse_from_given_token(self.get_current_token())
+            
+            self.advance_current()
+            
+            key_token = self.give_token_and_advance() # here key token will be right brace or comma and current will be on either { or another key string
+
+            if key_token.tokenType == TokenType.COMMA:
+                key_token = self.give_token_and_advance() # here key token will be string and current will be on colon
             
         return json_object   
     
