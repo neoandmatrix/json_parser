@@ -22,31 +22,37 @@ class Lexer:
         self.lines = 1      # number of lines
         self.tokens = []    # the token list initializing it to be an empty list
 
-    def nextAndReturnCurrent(self) -> str:
+    def move_to_next_and_return_current(self) -> str:
         char = self.text[self.current]
         self.current += 1
         return char
 
     def scan(self) -> list[Token]:
-        while not self.isEnd(): # is end will return ture or false specifying that we have reached end of file or not
+        while not self.is_end(): # is end will return ture or false specifying that we have reached end of file or not
             self.start = self.current
-            self.scanCurrent()
+            self.scan_current()
 
         self.tokens.append(Token(tokenTypes.TokenType.EOF,None)) # after we have completed scanning we add an end of file token
         return self.tokens    
     
-    def isEnd(self):        # if current pointer exceeds total length
+    def is_end(self) -> bool:        # if current pointer exceeds total length
         return self.current >= len(self.text)
 
-    def scanCurrent(self): 
-        character = self.nextAndReturnCurrent()
+    def scan_current(self): 
+        character = self.move_to_next_and_return_current()
         match character:
             case "{": # starting of an object
                 self.tokens.append(Token(tokenTypes.TokenType.LEFT_BRACE,character))
             case "}": # ending of an object
                 self.tokens.append(Token(tokenTypes.TokenType.RIGHT_BRACE,character))
             case '"': # starting of an string
-                self.addString()   # parse and add the whole string as once
+                self.add_string()   # parse and add the whole string as once
+            # case character.isdigit():
+            #     self.add_number()
+            case '[':
+                self.tokens.append(Token(tokenTypes.TokenType.LEFT_SQUARE_BRACKET,character))
+            case ']':
+                self.tokens.append(Token(tokenTypes.TokenType.RIGHT_SQUARE_BRACKET,character))                    
             case ':':
                 self.tokens.append(Token(tokenTypes.TokenType.COLON,character))
             case ',':
@@ -56,20 +62,27 @@ class Lexer:
             case _:
                 raise ValueError("Unexpected token",character,self.lines)    
 
-    def addString(self):
-        while self.peak() != '"' or self.isEnd():
-            self.nextAndReturnCurrent()
+    def add_string(self) -> None:
+        while self.peek() != '"' or self.is_end():
+            self.move_to_next_and_return_current()
 
-        if  self.isEnd():
+        if  self.is_end():
             raise ValueError('string must end with " ')
         
-        self.nextAndReturnCurrent() # if all above is not true means the string is terminated and we move past the end double quote
+        self.move_to_next_and_return_current() # if all above is not true means the string is terminated and we move past the end double quote
 
         self.tokens.append(Token(tokenTypes.TokenType.STRING,
                                  self.text[self.start+1:self.current-1]))  
-
-    def peak(self):
-        if self.isEnd():
+    def peek(self) -> str:
+        if self.is_end():
             return ""
         else:
             return self.text[self.current]
+
+    def add_number(self) -> None:
+        while self.peek().isdigit():
+            self.move_to_next_and_return_current() # this will break when the loop is at a non digit character
+
+        self.tokens.append(Token(tokenTypes.TokenType.NUMBER,
+                                 self.text[self.start+1:self.current-1]))    
+    
