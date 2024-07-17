@@ -2,15 +2,17 @@
 
 from lexer import Lexer,Token
 from tokenTypes import TokenType
-
+from typing import List
 
 JSON_OBJECT = dict[str,str]
+ARRAY = list
+PARSED_OBJECT = JSON_OBJECT 
 
 def parse() -> JSON_OBJECT:
     test_string = input()
     lexer = Lexer(test_string)
     tokens = lexer.scan()
-    #print(tokens)
+    # print(tokens)
     # print(len(tokens))
     # for i in range(len(tokens)):
     #     print(tokens[i].value)
@@ -43,23 +45,25 @@ class Parser: # this contains all the parser features
     def parse_from_given_token(self,token : Token) -> JSON_OBJECT: # parse on basis of the token type and returns the appropriate python representaion
         match token.tokenType:
             case TokenType.LEFT_BRACE: # if we encounter a left brace means we are at start of python object so calling the parse object
-                return self.parseObject()
+                return self.parse_object()
             case TokenType.STRING :
                 return self.get_current_token().value
+            case TokenType.LEFT_SQUARE_BRACKET:
+                return self.parse_array()
     
     def advance_current(self)->None:
         self.current += 1        
 
     def parse_colon(self) -> None:
         if self.tokens[self.current].tokenType != TokenType.COLON:
-            #print(self.current)
+           #print(self.current)
            # print(self.getCurrentToken().value)
             raise ValueError("string must be followed by colon")
         
         # means it is colon and we shift the current pointer by 1
         self.current += 1        
 
-    def parseObject(self) -> JSON_OBJECT:
+    def parse_object(self) -> JSON_OBJECT:
         
         json_object : JSON_OBJECT = {}
         
@@ -88,7 +92,23 @@ class Parser: # this contains all the parser features
 
             if key_token.tokenType == TokenType.COMMA:
                 key_token = self.give_token_and_advance() # here key token will be string and current will be on colon
-            
-        return json_object   
+        
+        self.current -= 1  # reducing the extra shift at the end 
+        return json_object  
     
+    def parse_array(self)->list:
+        # entering this function at left bracket
+        return_list : list = []
+        # self.advance_current() # current at a value
+        initial_value = self.give_token_and_advance() # current is at key
+
+        while initial_value.tokenType != TokenType.RIGHT_SQUARE_BRACKET:
+            print(self.current)
+            return_list.append(self.parse_from_given_token(self.get_current_token()))
+            if self.tokens[self.current].tokenType == TokenType.EOF or self.tokens[self.current].tokenType == TokenType.RIGHT_SQUARE_BRACKET:
+                break
+            self.advance_current() # current at either , or ]
+            initial_value = self.give_token_and_advance() # assigned , or ] and current at next token
+        return return_list
+
 print(parse())
