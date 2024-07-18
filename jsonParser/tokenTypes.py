@@ -5,9 +5,10 @@ class TokenType:
     LEFT_BRACE = auto()
     RIGHT_BRACE = auto()
     STRING = auto()
-    NUMBER = auto()
+    FLOAT = auto()
+    NUMBER = auto() 
     BOOLEAN = auto()
-    NONE = auto()
+    NONE = auto() 
     LEFT_SQUARE_BRACKET = auto()
     RIGHT_SQUARE_BRACKET = auto()
 
