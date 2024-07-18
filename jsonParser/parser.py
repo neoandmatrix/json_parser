@@ -8,8 +8,8 @@ JSON_OBJECT = dict[str,str]
 ARRAY = list
 PARSED_OBJECT = JSON_OBJECT 
 
-def parse() -> JSON_OBJECT:
-    test_string = input()
+def parse(string : str) -> JSON_OBJECT:
+    test_string = string
     lexer = Lexer(test_string)
     tokens = lexer.scan()
     parser = Parser(tokens)
@@ -107,4 +107,3 @@ class Parser: # this contains all the parser features
             initial_value = self.give_token_and_advance() # assigned , or ] and current at next token
         return return_list
 
-print(parse())
