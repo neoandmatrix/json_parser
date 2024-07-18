@@ -26,6 +26,16 @@ class Lexer:
         char = self.text[self.current]
         self.current += 1
         return char
+    
+    def advance(self):
+        self.current += 1
+
+    def peek_next(self):
+        try:
+            self.current +=1
+            return self.text[self.current]
+        finally:
+            self.current -= 1
 
     def scan(self) -> list[Token]:
         while not self.is_end(): # is end will return ture or false specifying that we have reached end of file or not
@@ -38,6 +48,12 @@ class Lexer:
     def is_end(self) -> bool:        # if current pointer exceeds total length
         return self.current >= len(self.text)
 
+    def peek(self) -> str:
+        if self.is_end():
+            return ""
+        else:
+            return self.text[self.current]
+
     def scan_current(self): 
         character = self.move_to_next_and_return_current()
         match character:
@@ -47,8 +63,6 @@ class Lexer:
                 self.tokens.append(Token(tokenTypes.TokenType.RIGHT_BRACE,character))
             case '"': # starting of an string
                 self.add_string()   # parse and add the whole string as once
-            # case character.isdigit():
-            #     self.add_number()
             case '[':
                 self.tokens.append(Token(tokenTypes.TokenType.LEFT_SQUARE_BRACKET,character))
             case ']':
@@ -57,10 +71,20 @@ class Lexer:
                 self.tokens.append(Token(tokenTypes.TokenType.COLON,character))
             case ',':
                 self.tokens.append(Token(tokenTypes.TokenType.COMMA,character))
+            case '-':
+                if self.peek().isdigit():
+                    self.add_number()
+                else:
+                    raise ValueError('- sign must be followed by a digit')        
             case "\n":
                 self.lines += 1
             case _:
-                raise ValueError("Unexpected token",character,self.lines)    
+                if character.isdigit():
+                    self.add_number()
+                elif character.isalpha():
+                    self.add_none_or_boolean()
+                else:
+                    raise ValueError(f'unknown character at index {self.current}')        
 
     def add_string(self) -> None:
         while self.peek() != '"' or self.is_end():
@@ -73,16 +97,45 @@ class Lexer:
 
         self.tokens.append(Token(tokenTypes.TokenType.STRING,
                                  self.text[self.start+1:self.current-1]))  
-    def peek(self) -> str:
-        if self.is_end():
-            return ""
-        else:
-            return self.text[self.current]
 
     def add_number(self) -> None:
         while self.peek().isdigit():
             self.move_to_next_and_return_current() # this will break when the loop is at a non digit character
 
-        self.tokens.append(Token(tokenTypes.TokenType.NUMBER,
-                                 self.text[self.start+1:self.current-1]))    
-    
+            if self.peek() == '.': # means the digit should be float
+                if not self.peek_next().isdigit():
+                    raise ValueError('. should be followed by a digit')
+                self.advance() # move past .
+                
+                while self.peek().isdigit(): # this will break at a non digit number and current will be at that thing
+                    self.advance()
+                # if this condition has run means the digit is a float
+
+                self.tokens.append(Token(tokenTypes.TokenType.FLOAT,
+                                         float(self.text[self.start:self.current-1])))    
+                return
+            
+            self.tokens.append(Token(tokenTypes.TokenType.FLOAT,
+                                         int(self.text[self.start:self.current-1])))
+            return
+        
+    def add_none_or_boolean(self):
+         
+        while self.peek().isalpha():
+            self.advance()
+
+        token = self.text[self.start:self.current-1].lower()
+        if len(token) < 3: # means not either null none true or false
+            raise ValueError('unknown token')
+        match token:
+            case 'null':
+                self.tokens.append(Token(tokenTypes.TokenType.NONE,None))
+            case 'none':
+                self.tokens.append(Token(tokenTypes.TokenType.NONE,None))
+            case 'true':
+                self.tokens.append(Token(tokenTypes.TokenType.BOOLEAN,True))
+            case 'false':
+                self.tokens.append(Token(tokenTypes.TokenType.BOOLEAN,False))   
+            case _ :
+                raise ValueError('unknown string')            
+            
