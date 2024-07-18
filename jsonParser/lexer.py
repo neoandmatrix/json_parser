@@ -78,6 +78,8 @@ class Lexer:
                     raise ValueError('- sign must be followed by a digit')        
             case "\n":
                 self.lines += 1
+            case " ":
+                pass    
             case _:
                 if character.isdigit():
                     self.add_number()
@@ -112,19 +114,19 @@ class Lexer:
                 # if this condition has run means the digit is a float
 
                 self.tokens.append(Token(tokenTypes.TokenType.FLOAT,
-                                         float(self.text[self.start:self.current-1])))    
+                                         float(self.text[self.start:self.current])))    
                 return
-            
-            self.tokens.append(Token(tokenTypes.TokenType.FLOAT,
-                                         int(self.text[self.start:self.current-1])))
-            return
+          
+        self.tokens.append(Token(tokenTypes.TokenType.NUMBER,
+                                         int(self.text[self.start:self.current])))
+        return    
         
     def add_none_or_boolean(self):
          
         while self.peek().isalpha():
             self.advance()
 
-        token = self.text[self.start:self.current-1].lower()
+        token = self.text[self.start:self.current].lower()
         if len(token) < 3: # means not either null none true or false
             raise ValueError('unknown token')
         match token:

@@ -12,10 +12,6 @@ def parse() -> JSON_OBJECT:
     test_string = input()
     lexer = Lexer(test_string)
     tokens = lexer.scan()
-    # print(tokens)
-    # print(len(tokens))
-    # for i in range(len(tokens)):
-    #     print(tokens[i].value)
     parser = Parser(tokens)
     return parser.parse()
 
@@ -46,7 +42,7 @@ class Parser: # this contains all the parser features
         match token.tokenType:
             case TokenType.LEFT_BRACE: # if we encounter a left brace means we are at start of python object so calling the parse object
                 return self.parse_object()
-            case TokenType.STRING :
+            case TokenType.STRING | TokenType.NUMBER | TokenType.BOOLEAN | TokenType.FLOAT | TokenType.NONE :
                 return self.get_current_token().value
             case TokenType.LEFT_SQUARE_BRACKET:
                 return self.parse_array()
